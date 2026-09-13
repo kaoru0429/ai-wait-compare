@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>AI 等待時間比較</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --border: #475569;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: #0ea5e9;
+      --wait: #f59e0b;
+      --output: #22c55e;
+      --danger: #f87171;
+      --ok: #4ade80;
+      --banner: #7c3aed;
+      --radius: 12px;
+      --tap: 48px;
+      --shadow: 0 4px 24px rgba(0,0,0,.35);
+      font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      font-size: 16px;
+    }
+    .wrap {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 12px 14px 40px;
+    }
+    header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 8px 0 4px;
+      letter-spacing: -0.02em;
+    }
+    header .sub {
+      color: var(--muted);
+      font-size: 0.875rem;
+      margin: 0 0 12px;
+    }
+    .banner {
+      background: linear-gradient(135deg, #5b21b6, #7c3aed 60%, #a78bfa);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .banner .icon { font-size: 1.25rem; flex-shrink: 0; line-height: 1.3; }
+    .banner p { margin: 0; font-weight: 500; opacity: 0.95; }
+    .banner strong { font-weight: 700; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface2);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+    .card h2 {
+      font-size: 1rem;
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .badge {
+      font-size: 0.7rem;
+      background: var(--surface2);
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .field { margin-bottom: 12px; }
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      min-height: var(--tap);
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+    }
+    input.invalid {
+      border-color: var(--danger);
+    }
+    .err {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: 4px;
+      display: none;
+    }
+    .err.show { display: block; }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      min-height: var(--tap);
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform .1s, opacity .15s, background .15s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: var(--accent-dim);
+      color: #0f172a;
+      width: 100%;
+    }
+    .btn-primary:hover { background: var(--accent); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid rgba(248, 113, 113, 0.4);
+    }
+    .btn-sm {
+      min-height: 40px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .actions .btn { flex: 1 1 auto; min-width: 120px; }
+
+    .formula {
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      word-break: break-all;
+    }
+    .formula span { color: var(--accent); }
+
+    .rank-list { list-style: none; margin: 0; padding: 0; }
+    .rank-item {
+      background: var(--bg);
+      border: 1px solid var(--surface2);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .rank-item.top {
+      border-color: rgba(56, 189, 248, 0.45);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15);
+    }
+    .rank-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .rank-num {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .rank-item.top .rank-num {
+      background: var(--accent-dim);
+      color: #0f172a;
+    }
+    .rank-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      flex: 1;
+      word-break: break-word;
+    }
+    .rank-total {
+      font-size: 0.85rem;
+      color: var(--accent);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+      font-size: 0.75rem;
+      margin-bottom: 10px;
+    }
+    .metric {
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+    }
+    .metric .lbl { color: var(--muted); display: block; margin-bottom: 2px; }
+    .metric .val { font-weight: 700; font-size: 0.85rem; }
+    .metric.wait .val { color: var(--wait); }
+    .metric.out .val { color: var(--output); }
+    .metric.tot .val { color: var(--accent); }
+    .item-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .item-actions .btn { flex: 1; }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 24px 12px;
+      font-size: 0.9rem;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 260px;
+      margin-top: 4px;
+    }
+    .legend-hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 8px;
+      text-align: center;
+    }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+    .dot.wait { background: var(--wait); }
+    .dot.out { background: var(--output); }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #1e293b;
+      border: 1px solid var(--ok);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: transform .25s, opacity .25s;
+      z-index: 100;
+      pointer-events: none;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    dialog {
+      border: 1px solid var(--surface2);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      padding: 0;
+      max-width: 360px;
+      width: calc(100vw - 32px);
+      box-shadow: var(--shadow);
+    }
+    dialog::backdrop { background: rgba(0,0,0,.6); }
+    .dlg-body { padding: 18px; }
+    .dlg-body h3 { margin: 0 0 8px; font-size: 1.05rem; }
+    .dlg-body p { margin: 0 0 16px; color: var(--muted); font-size: 0.9rem; }
+    .dlg-actions { display: flex; gap: 8px; }
+    .dlg-actions .btn { flex: 1; }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-top: 8px;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    @media (min-width: 480px) {
+      .wrap { padding: 20px 16px 48px; }
+      header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>AI 等待時間比較</h1>
+      <p class="sub">比較各模型「開始前等待 + 輸出時間」，找出最早完成者</p>
+    </header>
+
+    <div class="banner" role="status">
+      <span class="icon" aria-hidden="true">⚠️</span>
+      <div>
+        <strong>虛構範例資料</strong>
+        <p>本頁示範數據皆為虛構，僅供理解「高 tok/s 仍可能較晚完成」的觀念，不代表真實模型表現。</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>計算公式</h2>
+      <div class="formula">
+        總秒數 = <span>等待秒數</span> + (<span>希望 tokens</span> ÷ <span>每秒 tokens</span>)
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="form-title">新增模型</h2>
+      <form id="model-form" novalidate>
+        <input type="hidden" id="edit-id" value="" />
+        <div class="field">
+          <label for="name">模型名稱</label>
+          <input type="text" id="name" name="name" placeholder="例如：虛構範例・短等待" maxlength="60" autocomplete="off" required />
+          <div class="err" id="err-name">請輸入模型名稱</div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="wait">開始輸出前等待秒數</label>
+            <input type="number" id="wait" name="wait" inputmode="decimal" min="0" step="any" placeholder="例如：10" required />
+            <div class="err" id="err-wait">請輸入 ≥ 0 的數字</div>
+          </div>
+          <div class="field">
+            <label for="tps">每秒輸出 tokens</label>
+            <input type="number" id="tps" name="tps" inputmode="decimal" min="0" step="any" placeholder="例如：30" required />
+            <div class="err" id="err-tps">每秒 tokens 必須大於 0</div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="tokens">希望產生 tokens</label>
+          <input type="number" id="tokens" name="tokens" inputmode="decimal" min="0" step="any" placeholder="例如：900" required />
+          <div class="err" id="err-tokens">請輸入 ≥ 0 的數字</div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="submit-btn">加入比較</button>
+        <button type="button" class="btn btn-ghost" id="cancel-edit" style="display:none;width:100%;margin-top:8px;">取消編輯</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>排名結果 <span class="badge" id="count-badge">0</span></h2>
+      <ul class="rank-list" id="rank-list"></ul>
+      <div class="empty" id="empty-msg" style="display:none;">尚無模型，請新增或還原示範資料。</div>
+    </div>
+
+    <div class="card">
+      <h2>時間組成圖表</h2>
+      <div class="chart-wrap">
+        <canvas id="chart" aria-label="等待與輸出時間長條圖"></canvas>
+      </div>
+      <p class="legend-hint">
+        <span class="dot wait"></span>開始輸出前的等待
+        &nbsp;&nbsp;
+        <span class="dot out"></span>實際輸出時間
+        <br />堆疊後高度 = 總完成時間
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>資料管理</h2>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" id="btn-restore">還原示範資料</button>
+        <button type="button" class="btn btn-danger" id="btn-clear">清空全部</button>
+      </div>
+    </div>
+
+    <footer>資料僅存於本機瀏覽器（localStorage）· 無後端</footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="confirm-dlg">
+    <div class="dlg-body">
+      <h3 id="dlg-title">確認</h3>
+      <p id="dlg-msg"></p>
+      <div class="dlg-actions">
+        <button type="button" class="btn btn-ghost" id="dlg-cancel">取消</button>
+        <button type="button" class="btn btn-danger" id="dlg-ok">確定</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+(function () {
+  'use strict';
+
+  const STORAGE_KEY = 'ai-wait-compare-v1';
+
+  /** 示範：高 tok/s 長等待仍晚於短等待慢輸出 */
+  const DEMO_MODELS = [
+    {
+      id: 'demo-short-wait',
+      name: '虛構範例・短等待慢輸出',
+      waitSeconds: 10,
+      tokensPerSecond: 30,
+      desiredTokens: 900
+    },
+    {
+      id: 'demo-long-wait',
+      name: '虛構範例・長等待快輸出',
+      waitSeconds: 45,
+      tokensPerSecond: 150,
+      desiredTokens: 900
+    },
+    {
+      id: 'demo-mid',
+      name: '虛構範例・中等均衡',
+      waitSeconds: 25,
+      tokensPerSecond: 45,
+      desiredTokens: 900
+    }
+  ];
+
+  let models = [];
+  let chart = null;
+  let pendingConfirm = null;
+
+  const $ = (sel) => document.querySelector(sel);
+  const form = $('#model-form');
+  const editIdEl = $('#edit-id');
+  const formTitle = $('#form-title');
+  const submitBtn = $('#submit-btn');
+  const cancelEdit = $('#cancel-edit');
+  const rankList = $('#rank-list');
+  const emptyMsg = $('#empty-msg');
+  const countBadge = $('#count-badge');
+  const toastEl = $('#toast');
+  const dlg = $('#confirm-dlg');
+
+  function uid() {
+    return 'm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw === null) {
+        models = DEMO_MODELS.map((m) => ({ ...m }));
+        save();
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      models = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      models = DEMO_MODELS.map((m) => ({ ...m }));
+      save();
+    }
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(models));
+  }
+
+  /** Format seconds as readable Traditional Chinese */
+  function formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return '—';
+    if (seconds < 60) {
+      const s = Math.round(seconds * 10) / 10;
+      return Number.isInteger(s) ? s + '秒' : s.toFixed(1) + '秒';
+    }
+    const totalSec = Math.round(seconds);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    let parts = [];
+    if (h > 0) parts.push(h + '小時');
+    if (m > 0) parts.push(m + '分');
+    if (s > 0 || parts.length === 0) parts.push(s + '秒');
+    return parts.join('');
+  }
+
+  function compute(m) {
+    const wait = Number(m.waitSeconds) || 0;
+    const tps = Number(m.tokensPerSecond);
+    const tokens = Number(m.desiredTokens) || 0;
+    const output = tps > 0 ? tokens / tps : Infinity;
+    const total = wait + output;
+    return { wait, output, total };
+  }
+
+  function ranked() {
+    return models
+      .map((m) => ({ ...m, ...compute(m) }))
+      .sort((a, b) => a.total - b.total);
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toastEl.classList.remove('show'), 2200);
+  }
+
+  function clearErrors() {
+    ['name', 'wait', 'tps', 'tokens'].forEach((k) => {
+      const input = $('#' + (k === 'name' ? 'name' : k === 'wait' ? 'wait' : k === 'tps' ? 'tps' : 'tokens'));
+      const err = $('#err-' + k);
+      if (input) input.classList.remove('invalid');
+      if (err) err.classList.remove('show');
+    });
+  }
+
+  function validate() {
+    clearErrors();
+    let ok = true;
+    const name = $('#name').value.trim();
+    const waitStr = $('#wait').value.trim();
+    const tpsStr = $('#tps').value.trim();
+    const tokensStr = $('#tokens').value.trim();
+
+    if (!name) {
+      $('#name').classList.add('invalid');
+      $('#err-name').classList.add('show');
+      ok = false;
+    }
+
+    const wait = Number(waitStr);
+    if (waitStr === '' || !Number.isFinite(wait) || wait < 0) {
+      $('#wait').classList.add('invalid');
+      $('#err-wait').textContent = '請輸入 ≥ 0 的數字';
+      $('#err-wait').classList.add('show');
+      ok = false;
+    }
+
+    const tps = Number(tpsStr);
+    if (tpsStr === '' || !Number.isFinite(tps) || tps <= 0) {
+      $('#tps').classList.add('invalid');
+      $('#err-tps').textContent = '每秒 tokens 必須大於 0';
+      $('#err-tps').classList.add('show');
+      ok = false;
+    }
+
+    const tokens = Number(tokensStr);
+    if (tokensStr === '' || !Number.isFinite(tokens) || tokens < 0) {
+      $('#tokens').classList.add('invalid');
+      $('#err-tokens').textContent = '請輸入 ≥ 0 的數字';
+      $('#err-tokens').classList.add('show');
+      ok = false;
+    }
+
+    return ok ? { name, waitSeconds: wait, tokensPerSecond: tps, desiredTokens: tokens } : null;
+  }
+
+  function resetForm() {
+    form.reset();
+    editIdEl.value = '';
+    formTitle.textContent = '新增模型';
+    submitBtn.textContent = '加入比較';
+    cancelEdit.style.display = 'none';
+    clearErrors();
+  }
+
+  function startEdit(id) {
+    const m = models.find((x) => x.id === id);
+    if (!m) return;
+    editIdEl.value = m.id;
+    $('#name').value = m.name;
+    $('#wait').value = m.waitSeconds;
+    $('#tps').value = m.tokensPerSecond;
+    $('#tokens').value = m.desiredTokens;
+    formTitle.textContent = '編輯模型';
+    submitBtn.textContent = '儲存變更';
+    cancelEdit.style.display = 'block';
+    clearErrors();
+    $('#name').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function confirmAction(title, msg, onOk) {
+    $('#dlg-title').textContent = title;
+    $('#dlg-msg').textContent = msg;
+    pendingConfirm = onOk;
+    dlg.showModal();
+  }
+
+  function renderList() {
+    const list = ranked();
+    countBadge.textContent = String(list.length);
+    rankList.innerHTML = '';
+    emptyMsg.style.display = list.length ? 'none' : 'block';
+
+    list.forEach((m, i) => {
+      const li = document.createElement('li');
+      li.className = 'rank-item' + (i === 0 ? ' top' : '');
+      li.innerHTML =
+        '<div class="rank-head">' +
+          '<div class="rank-num">' + (i + 1) + '</div>' +
+          '<div class="rank-name"></div>' +
+          '<div class="rank-total"></div>' +
+        '</div>' +
+        '<div class="metrics">' +
+          '<div class="metric wait"><span class="lbl">等待</span><span class="val"></span></div>' +
+          '<div class="metric out"><span class="lbl">輸出</span><span class="val"></span></div>' +
+          '<div class="metric tot"><span class="lbl">合計</span><span class="val"></span></div>' +
+        '</div>' +
+        '<div class="item-actions">' +
+          '<button type="button" class="btn btn-ghost btn-sm btn-edit">編輯</button>' +
+          '<button type="button" class="btn btn-danger btn-sm btn-del">刪除</button>' +
+        '</div>';
+      li.querySelector('.rank-name').textContent = m.name;
+      li.querySelector('.rank-total').textContent = formatTime(m.total);
+      li.querySelector('.metric.wait .val').textContent = formatTime(m.wait);
+      li.querySelector('.metric.out .val').textContent = formatTime(m.output);
+      li.querySelector('.metric.tot .val').textContent = formatTime(m.total);
+      li.querySelector('.btn-edit').addEventListener('click', () => startEdit(m.id));
+      li.querySelector('.btn-del').addEventListener('click', () => {
+        confirmAction('刪除模型', '確定要刪除「' + m.name + '」嗎？', () => {
+          models = models.filter((x) => x.id !== m.id);
+          if (editIdEl.value === m.id) resetForm();
+          save();
+          render();
+          showToast('已刪除');
+        });
+      });
+      rankList.appendChild(li);
+    });
+  }
+
+  function renderChart() {
+    const list = ranked();
+    const labels = list.map((m) => {
+      const n = m.name;
+      return n.length > 10 ? n.slice(0, 9) + '…' : n;
+    });
+    const waits = list.map((m) => Math.round(m.wait * 100) / 100);
+    const outs = list.map((m) =>
+      Number.isFinite(m.output) ? Math.round(m.output * 100) / 100 : 0
+    );
+
+    const data = {
+      labels,
+      datasets: [
+        {
+          label: '開始輸出前的等待',
+          data: waits,
+          backgroundColor: 'rgba(245, 158, 11, 0.85)',
+          borderColor: 'rgba(245, 158, 11, 1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          stack: 'time'
+        },
+        {
+          label: '實際輸出時間',
+          data: outs,
+          backgroundColor: 'rgba(34, 197, 94, 0.85)',
+          borderColor: 'rgba(34, 197, 94, 1)',
+          borderWidth: 1,
+          borderRadius: 4,
+          stack: 'time'
+        }
+      ]
+    };
+
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#94a3b8',
+            boxWidth: 12,
+            padding: 12,
+            font: { size: 12 }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            afterBody: function (items) {
+              if (!items.length) return '';
+              const idx = items[0].dataIndex;
+              const m = list[idx];
+              return '合計：' + formatTime(m.total);
+            },
+            label: function (ctx) {
+              return ctx.dataset.label + '：' + formatTime(ctx.raw);
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: {
+            color: '#94a3b8',
+            maxRotation: 45,
+            minRotation: 0,
+            font: { size: 11 }
+          },
+          grid: { color: 'rgba(71, 85, 105, 0.35)' }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: '秒',
+            color: '#94a3b8'
+          },
+          ticks: { color: '#94a3b8' },
+          grid: { color: 'rgba(71, 85, 105, 0.35)' }
+        }
+      }
+    };
+
+    if (chart) {
+      chart.data = data;
+      chart.options = options;
+      chart.update();
+    } else {
+      const ctx = $('#chart').getContext('2d');
+      chart = new Chart(ctx, { type: 'bar', data, options });
+    }
+  }
+
+  function render() {
+    renderList();
+    renderChart();
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = validate();
+    if (!data) return;
+    const id = editIdEl.value;
+    if (id) {
+      const idx = models.findIndex((x) => x.id === id);
+      if (idx >= 0) {
+        models[idx] = { ...models[idx], ...data };
+        showToast('已更新');
+      }
+    } else {
+      models.push({ id: uid(), ...data });
+      showToast('已加入');
+    }
+    save();
+    resetForm();
+    render();
+  });
+
+  cancelEdit.addEventListener('click', resetForm);
+
+  $('#btn-restore').addEventListener('click', () => {
+    confirmAction('還原示範資料', '將以虛構範例覆蓋目前所有模型，確定嗎？', () => {
+      models = DEMO_MODELS.map((m) => ({ ...m }));
+      save();
+      resetForm();
+      render();
+      showToast('已還原示範資料');
+    });
+  });
+
+  $('#btn-clear').addEventListener('click', () => {
+    confirmAction('清空全部', '確定要刪除所有模型嗎？此操作無法復原。', () => {
+      models = [];
+      save();
+      resetForm();
+      render();
+      showToast('已清空');
+    });
+  });
+
+  $('#dlg-cancel').addEventListener('click', () => {
+    pendingConfirm = null;
+    dlg.close();
+  });
+  $('#dlg-ok').addEventListener('click', () => {
+    const fn = pendingConfirm;
+    pendingConfirm = null;
+    dlg.close();
+    if (fn) fn();
+  });
+
+  load();
+  render();
+})();
+  </script>
+</body>
+</html>
