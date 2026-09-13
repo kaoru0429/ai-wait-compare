@@ -1,42 +1,40 @@
-# 自動接力操作備忘（v1 — 2026-09-14）
+# 自動接力結案回報（寫法鎖定）
 
-小白只提需求。協調者（Grok Bot）負責授權後的全自動接力。不開專屬執行 Bot，直到本流水線多跑幾次穩定。
+> **原則：不是每條接點都必須走通。**  
+> 能通就記通過＋證據；不通就記未通＋取代／繞過（若有）；最後一句說清「要不要使用者做事」。  
+> 未通 ≠ 失敗到不能交付——產品能交、接點誠實標示即可。
 
-## 正式流水線
+## 每次接力結束只回報這四塊
 
-1. **需求入口**：本 repo Issue／聊天對協調者說目標。
-2. **施工（預設 Jules Pro）**
-   - REST 建 Session：`prompt` 以 `//` 開頭；`sourceContext.source = sources/github/kaoru0429/ai-wait-compare`
-   - 一律帶 `automationMode: "AUTO_CREATE_PR"`、`requirePlanApproval: false`（能開 PR 就開）
-   - 官方 Jules API **沒有** Publish／CreatePR 獨立端點（僅 create / get / list / approvePlan / sendMessage）
-3. **發布（雙路徑）**
-   - **A（優先）**：輪詢 Session `outputs[].pullRequest` → 用 Jules 開出的 PR
-   - **B（取代方案，已實測）**：有 `changeSet`／gitPatch 但無 PR → 協調者用 **GitHub Contents／Pulls API** 把 **同一份 Jules 補丁** 開 PR／合併  
-     - 施工者＝Jules；發布者＝Grok Bot API 轉寫  
-     - **禁止**為了掩蓋 Jules 開 PR 失敗而自行發明另一套修復
-4. **第二審（獨立 AI）**
-   - **預設**：GitHub `@codex review`（已通）
-   - **備援**：Claude Code **client**（box 登入一次後由協調者 `-p` 代送）— 不依賴 `@claude` GitHub App
-   - **禁止**用協調者自審冒充第二 AI
-5. **複核 → 合併 → Pages**；進度寫 Issue + `PROGRESS.md` / `BUILD_LOG.md`
+1. **哪些接點已實測通過**（附證據連結）
+2. **哪裡仍未通**（可寫取代方案，但不要假裝已通）
+3. **是否需要使用者處理什麼**（沒有就寫「沒有」）
+4. （可選）本次交付連結（預覽／PR／commit）
 
-## 已知未通（不要當主路徑）
+不要寫成長篇流水帳；不要把「理想全綠路徑」寫成硬性門檻。
 
-| 接點 | 狀態 | 取代 |
-|---|---|---|
-| Jules `AUTO_CREATE_PR`／App Publish | 不穩；App「Ready for review」需人按，API 代按不了 | 路徑 B：GitHub API 轉寫 changeSet |
-| Jules 原 Session 續修（COMPLETED 後 sendMessage） | 半通／常無新產出 | 開新 Session 修同一 Issue |
-| Claude GitHub `@claude review` | 未通 | Claude Code client 代審 |
+## 本輪（2026-09-14）結案快照
 
-## 證據錨點（本輪接力）
-
-- Issue：https://github.com/kaoru0429/ai-wait-compare/issues/3
-- Codex 初審：https://github.com/kaoru0429/ai-wait-compare/pull/4#pullrequestreview-5192475274
-- Jules 補丁 Session：https://jules.google.com/session/13615700408848045305
-- 路徑 B 落地 PR：https://github.com/kaoru0429/ai-wait-compare/pull/5 （已合併 `e180c06`）
+### 已實測通過
+- answerLen 缺陷確認並修進 `main`（合併 `e180c06`）
+- Codex GitHub 審／複核：https://github.com/kaoru0429/ai-wait-compare/pull/4#pullrequestreview-5192475274 ；PR https://github.com/kaoru0429/ai-wait-compare/pull/5
+- Claude Code client 代審（非 `@claude` GitHub）
+- Jules 產出補丁：https://jules.google.com/session/13615700408848045305
 - 預覽：https://kaoru0429.github.io/ai-wait-compare/
+- 紀錄：https://github.com/kaoru0429/ai-wait-compare/issues/3
 
-## 參考
+### 仍未通（可接受；有取代就註明）
+- Jules `AUTO_CREATE_PR`／App Publish（無 Publish API）→ 本次用 GitHub API 轉寫同一份 Jules changeSet 開 PR #5
+- Jules 原 Session 續修 `178116…` → 改開新 Session
+- Claude GitHub `@claude review` → 用 Claude Code client 代審
 
-- Jules API：https://developers.google.com/jules/api
-- Sessions reference：https://developers.google.com/jules/api/reference/rest/v1alpha/sessions
+### 需要使用者處理
+沒有。
+
+## 實務備註（給協調者，不是門檻）
+
+- Jules REST：create / get / list / approvePlan / sendMessage；開 PR 只能靠 create 時 `AUTO_CREATE_PR`，沒有就轉寫 changeSet。
+- 第二審：Codex `@codex review` 可用；Claude client 備援。禁止自審冒充第二 AI。
+- 專屬執行 Bot：先不開。
+
+參考：https://developers.google.com/jules/api
