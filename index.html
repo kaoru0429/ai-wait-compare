@@ -165,14 +165,9 @@ function fmtSec(s){
   return m+' 分 '+(r? r+' 秒':'整');
 }
 
-function estimatePromptBoost(text){
-  // 小白版：prompt 越長，略增一點「發呆感」（簡化，非真實 API）
-  const n = (text||'').trim().length;
-  if(n<=0) return 0;
-  if(n<80) return 0;
-  if(n<300) return 2;
-  if(n<800) return 5;
-  return 8;
+function estimatePromptBoost(_text){
+  // removed: must not alter formula total = wait + tokens/tps
+  return 0;
 }
 
 let models = load();
@@ -202,7 +197,7 @@ function updateModelNote(){
 }
 
 function calcOne(m, answerTokens, promptText){
-  const wait = Number(m.wait)+estimatePromptBoost(promptText);
+  const wait = Number(m.wait);
   const out = answerTokens / Number(m.tps);
   return { wait, out, total: wait+out };
 }
@@ -236,9 +231,7 @@ function calc(){
   }else{
     why += ` 這次它綜合最早完成。`;
   }
-  if(estimatePromptBoost(prompt)>0){
-    why += ` 你的 prompt 偏長，我有稍微多算一點發呆時間。`;
-  }
+  
   $('why').textContent=why;
   drawChart(others);
 }
@@ -290,8 +283,10 @@ function renderModelList(){
   });
 }
 
-$('model').onchange=updateModelNote;
+$('model').onchange=()=>{ updateModelNote(); if(!$('resultCard').hidden) calc(); };
 $('calcBtn').onclick=calc;
+$('answerLen').addEventListener('change', ()=>{ if(!$('resultCard').hidden) calc(); }); // answerLenRecalcBound
+
 $('addModel').onclick=()=>{
   const name=$('mName').value.trim();
   const wait=Number($('mWait').value);
