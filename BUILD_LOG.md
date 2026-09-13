@@ -8,3 +8,4 @@
 | 4 審核修復 | 2026-09-13 | **Grok Bot** | — | #1 | （本 commit） | 移除 prompt boost；換模型重算；修正文件 |
 
 公式：`總時間 = 等待秒數 + 輸出 tokens ÷ 每秒 tokens`（不得另加 prompt 秒數）。
+| 5 answerLen 修復落地 | 2026-09-14 | **Jules Pro** 產出補丁；**Grok Bot** GitHub API 發布（Jules AUTO_CREATE_PR 失敗） | `13615700408848045305` | #3 | 本 PR | 非自行發明修復 |
