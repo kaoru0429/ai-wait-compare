@@ -23,19 +23,19 @@
 
 ---
 
-## 正式接力規則（鎖定 2026-09-14）
+---
 
-詳見 [`RELAY_OPS.md`](./RELAY_OPS.md)。
+## 結案回報格式（鎖定 2026-09-14）
 
-| 步驟 | 誰 | 規則 |
-|---|---|---|
-| 施工 | Jules Pro | Session + `//` + `AUTO_CREATE_PR` |
-| 發布 | Jules PR **或** GitHub API 轉寫 changeSet | 無 Publish API；禁止發明另一套修復 |
-| 第二審 | Codex `@codex review` 預設；Claude Code client 備援 | 禁止自審冒充 |
-| 執行 Bot | 不開 | 等流水線再穩幾次 |
+詳見 [`RELAY_OPS.md`](./RELAY_OPS.md)。**未通接點可保留；不要求全綠才算完成。**
 
-### 本輪閉環證據
-- 審：Codex + Claude client（answerLen P0）
-- 修：Jules `13615700408848045305`
-- 發：PR #5（API 轉寫）→ 合併 `e180c06`
-- 未通：Jules 自開 PR、`@claude` GitHub
+每次結束只寫：
+1. 已實測通過＋證據連結
+2. 仍未通（可附取代）
+3. 是否需要使用者處理（沒有就寫沒有）
+
+### 本輪快照
+- 通過：Codex 審、Claude client 審、Jules 補丁、PR #5 合併 `e180c06`、Pages
+- 未通：Jules 自開 PR、`@claude` GitHub、原 Session 續修
+- 使用者：不用做事
+
