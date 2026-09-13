@@ -25,17 +25,19 @@
 
 ---
 
+---
+
 ## 結案回報格式（鎖定 2026-09-14）
 
-詳見 [`RELAY_OPS.md`](./RELAY_OPS.md)。**未通接點可保留；不要求全綠才算完成。**
+詳見 [`RELAY_OPS.md`](./RELAY_OPS.md)。**必須分開寫「未通但已有取代」與「未通且無取代」。**
 
-每次結束只寫：
-1. 已實測通過＋證據連結
-2. 仍未通（可附取代）
-3. 是否需要使用者處理（沒有就寫沒有）
+1. 已實測通過＋證據  
+2. **未通，但已有取代**（未通項 → 取代項 → 取代是否實測）  
+3. 未通且尚無／未採用取代  
+4. 是否需要使用者處理  
 
 ### 本輪快照
-- 通過：Codex 審、Claude client 審、Jules 補丁、PR #5 合併 `e180c06`、Pages
-- 未通：Jules 自開 PR、`@claude` GitHub、原 Session 續修
-- 使用者：不用做事
-
+- 通過：Codex、Claude client、Jules 補丁、PR #5 合併、Pages  
+- **未通但已取代**：Jules 自開 PR → GitHub API 轉寫 changeSet；`@claude` GitHub → Claude client；原 Session 續修 → 新 Session  
+- 未通無取代：無  
+- 使用者：不用做事  
