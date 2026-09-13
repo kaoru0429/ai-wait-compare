@@ -27,17 +27,15 @@
 
 ---
 
-## 結案回報格式（鎖定 2026-09-14）
+---
 
-詳見 [`RELAY_OPS.md`](./RELAY_OPS.md)。**必須分開寫「未通但已有取代」與「未通且無取代」。**
+## MVP 接力基線（鎖定 2026-09-14）
 
-1. 已實測通過＋證據  
-2. **未通，但已有取代**（未通項 → 取代項 → 取代是否實測）  
-3. 未通且尚無／未採用取代  
-4. 是否需要使用者處理  
+詳見 [`RELAY_OPS.md`](./RELAY_OPS.md)。**MVP 狀態：規則已鎖；驗收 A／B 未完成 → 尚未標可用。**
 
-### 本輪快照
-- 通過：Codex、Claude client、Jules 補丁、PR #5 合併、Pages  
-- **未通但已取代**：Jules 自開 PR → GitHub API 轉寫 changeSet；`@claude` GitHub → Claude client；原 Session 續修 → 新 Session  
-- 未通無取代：無  
-- 使用者：不用做事  
+固定：幕僚長唯一入口；Jules 施工＋Codex 審（Claude client 備援）；Jules 無 PR 則轉寫同一 changeSet；新 Session 可接同一 Issue；最多兩輪正式修復；GitHub 必存接手欄位；結案用「通過／未通有替代／未通無替代／要否處理」；不建常駐 Bot。
+
+| 驗收 | 狀態 |
+|---|---|
+| A 正常使用（下一小需求全自動） | 尚未完成 |
+| B 接手恢復（GitHub 紀錄、不重複派工） | 尚未完成 |
