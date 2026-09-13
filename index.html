@@ -285,7 +285,6 @@ function renderModelList(){
 
 $('model').onchange=()=>{ updateModelNote(); if(!$('resultCard').hidden) calc(); };
 $('calcBtn').onclick=calc;
-$('answerLen').addEventListener('change', ()=>{ if(!$('resultCard').hidden) calc(); }); // answerLenRecalcBound
 
 $('addModel').onclick=()=>{
   const name=$('mName').value.trim();
