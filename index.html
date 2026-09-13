@@ -137,6 +137,22 @@
       <button class="ghost" id="resetDemo" type="button">恢復虛構示範</button>
       <div id="modelList"></div>
     </details>
+
+    <details class="adv card">
+      <summary>資料匯出與匯入</summary>
+      <div class="row">
+        <button class="ghost" id="copyJsonBtn" type="button">複製 JSON</button>
+        <button class="ghost" id="dlJsonBtn" type="button">下載 JSON</button>
+      </div>
+      <div style="margin-top:12px">
+        <label for="importArea">貼上或選擇 JSON 檔案</label>
+        <textarea id="importArea" placeholder="貼上模型的 JSON..."></textarea>
+        <input type="file" id="importFile" accept=".json" style="margin-top:8px" />
+      </div>
+      <div class="err" id="importErr"></div>
+      <div id="importSuccess" style="color:var(--ok);font-size:.85rem;margin-top:6px"></div>
+      <button class="primary" id="importBtn" type="button">匯入資料</button>
+    </details>
   </div>
 <script>
 const STORAGE_KEY = 'ai-wait-compare-v2-simple';
@@ -307,6 +323,82 @@ document.querySelectorAll('.token-btn').forEach(btn => {
     }
   };
 });
+
+$('copyJsonBtn').onclick = () => {
+  $('importErr').textContent = '';
+  $('importSuccess').textContent = '';
+  const jsonStr = JSON.stringify(models, null, 2);
+  navigator.clipboard.writeText(jsonStr)
+    .then(() => { $('importSuccess').textContent = '已複製 JSON 到剪貼簿。'; })
+    .catch(() => { $('importErr').textContent = '複製失敗，請手動選取並複製。'; });
+};
+
+$('dlJsonBtn').onclick = () => {
+  $('importErr').textContent = '';
+  $('importSuccess').textContent = '';
+  const jsonStr = JSON.stringify(models, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ai-wait-models.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  $('importSuccess').textContent = '已下載 JSON 檔案。';
+};
+
+$('importFile').onchange = (e) => {
+  $('importErr').textContent = '';
+  $('importSuccess').textContent = '';
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    $('importArea').value = evt.target.result;
+  };
+  reader.readAsText(file);
+};
+
+$('importBtn').onclick = () => {
+  $('importErr').textContent = '';
+  $('importSuccess').textContent = '';
+  const raw = $('importArea').value.trim();
+  if (!raw) {
+    $('importErr').textContent = '請先貼上 JSON 或選擇檔案。';
+    return;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      throw new Error('匯入資料必須是陣列格式');
+    }
+    const newModels = parsed.map(m => {
+      if (typeof m.name !== 'string' || !m.name.trim()) throw new Error('匯入失敗：缺少有效的 name');
+      if (typeof m.wait !== 'number' || m.wait < 0) throw new Error(`匯入失敗：模型 "${m.name}" 的 wait 必須是大於等於 0 的數字`);
+      if (typeof m.tps !== 'number' || m.tps <= 0) throw new Error(`匯入失敗：模型 "${m.name}" 的 tps 必須是大於 0 的數字`);
+      
+      return {
+        id: m.id || uid(),
+        name: m.name.trim(),
+        wait: m.wait,
+        tps: m.tps,
+        tag: m.tag || '匯入',
+        demo: !!m.demo
+      };
+    });
+    
+    models = newModels;
+    save(models);
+    refreshSelect();
+    $('importSuccess').textContent = `成功匯入 ${models.length} 個模型。`;
+    $('importArea').value = '';
+    $('importFile').value = '';
+  } catch (err) {
+    $('importErr').textContent = err.message || '匯入失敗：格式不正確，請確認是有效的 JSON。';
+  }
+};
 
 refreshSelect();
 </script>
