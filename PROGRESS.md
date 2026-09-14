@@ -1,31 +1,18 @@
-# 進度紀錄
+# 進度
 
 | 欄位 | 值 |
 |---|---|
-| Issue | [#1](https://github.com/kaoru0429/ai-wait-compare/issues/1) |
-| 施工 Session | Jules Pro `17811614581127510688`（快捷鈕）→ 審核修復本輪 **Grok Bot** |
-| PR | [#2](https://github.com/kaoru0429/ai-wait-compare/pull/2) **closed／未 merged**（衝突）；快捷鈕改動曾以 `825a5ba` 合進 main |
-| 最後完成階段 | 審核修復：公式／換模型重算／文件對照 |
-| 下一步 | 使用者驗收 Pages |
-| 防重做鎖 | （無） |
-| 首次施工 | **不是 Jules Pro**（Grok Bot Contents API） |
+| Issue | [#7](https://github.com/kaoru0429/ai-wait-compare/issues/7)（驗收 A） |
+| 施工平台 | Jules Pro |
+| Session | 建置 `6144700007644878471`；修復1 `15449304605274638371`；修復2 `13240302978964134258` |
+| PR | [#8](https://github.com/kaoru0429/ai-wait-compare/pull/8) **merged** |
+| 受審版本 | squash → main `f0a34b9c16bb` |
+| 審核結果 | Codex：初審 P1/P2 → 修復後 head 仍標 P1（程式已 textContent，視為過時）＋剩餘 P2；正式修復 2／2 已用完 |
+| 目前負責者 | 幕僚長助手 |
+| 最後完成階段 | 驗收 A 功能已合併進 main／Pages |
+| 下一步 | 驗收 B（接手恢復）；MVP 尚未標可用 |
 
----
-
-## Relay test 2026-09-14 (Taipei)
-
-- Codex GitHub review: PASS (PR #4)
-- Claude Code CLI review: PASS (P0 answerLen)
-- Claude GitHub @claude: FAIL
-- Jules repair open-PR junction: FAIL after 2/2 sessions (15864014575535797827, 13615700408848045305) — patch in artifacts only
-- Publish / re-review: NOT RUN
-- Dedicated execution bot: NOT created
-
----
-
----
-
----
+詳見 [RELAY_OPS.md](./RELAY_OPS.md)。
 
 ---
 
