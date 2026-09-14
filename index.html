@@ -285,9 +285,16 @@ function renderModelList(){
   models.forEach(m=>{
     const div=document.createElement('div');
     div.style.cssText='border-top:1px solid #334155;padding:10px 0;font-size:.85rem';
-    div.innerHTML=`<strong>${m.name}</strong> · 等待 ${m.wait}s · 速度 ${m.tps}`+
-      (m.demo?' · 虛構':'')+
-      ` <button type="button" data-del="${m.id}" style="margin-top:6px;width:auto;padding:6px 10px;background:#7f1d1d;color:#fff;border:0;border-radius:8px">刪除</button>`;
+    const strong = document.createElement('strong');
+    strong.textContent = m.name;
+    div.appendChild(strong);
+    div.appendChild(document.createTextNode(` · 等待 ${m.wait}s · 速度 ${m.tps}${m.demo ? ' · 虛構' : ''} `));
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.del = m.id;
+    btn.style.cssText = 'margin-top:6px;width:auto;padding:6px 10px;background:#7f1d1d;color:#fff;border:0;border-radius:8px';
+    btn.textContent = '刪除';
+    div.appendChild(btn);
     box.appendChild(div);
   });
   box.querySelectorAll('[data-del]').forEach(btn=>{
@@ -371,8 +378,8 @@ $('importBtn').onclick = () => {
   }
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      throw new Error('匯入資料必須是陣列格式');
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error('匯入資料必須是包含至少一個模型的陣列');
     }
     const newModels = parsed.map(m => {
       if (typeof m.name !== 'string' || !m.name.trim()) throw new Error('匯入失敗：缺少有效的 name');
