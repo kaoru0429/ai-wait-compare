@@ -11,3 +11,4 @@
 | 5 answerLen 修復落地 | 2026-09-14 | **Jules Pro** 產出補丁；**Grok Bot** GitHub API 發布（Jules AUTO_CREATE_PR 失敗） | `13615700408848045305` | #3 | 本 PR | 非自行發明修復 |
 | 6 結案回報格式鎖定 | 2026-09-14 | **Grok Bot** | — | #3 | `RELAY_OPS.md` + PROGRESS | 只回報通過／未通／要否處理；不要求全綠 |
 | 7 MVP 基線鎖定 | 2026-09-14 | **Grok Bot** | — | #3 | RELAY_OPS + skill | 10 條規則；驗收 A／B 未做；尚未標可用 |
+| 8 修復匯出匯入 | 2026-09-14 | **Jules Pro** | `6144700007644878471` | #7 | PR #8 | repair round 1, Codex P1/P2 |
