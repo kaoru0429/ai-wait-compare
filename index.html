@@ -396,8 +396,8 @@ $('importBtn').onclick = () => {
       };
     });
     
+    save(newModels); // Save first to throw if quota exceeded
     models = newModels;
-    save(models);
     refreshSelect();
     $('importSuccess').textContent = `成功匯入 ${models.length} 個模型。`;
     $('importArea').value = '';
